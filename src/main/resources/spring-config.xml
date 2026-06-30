@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Spring 4 XML bean 設定（遷移雷：Spring Boot 3 改用 auto-config / @Configuration / 建構子注入）。
+  org.springframework.orm.hibernate4.* 在 Spring 5 已移除，遷移時必須換掉。對應 design.md §3.3。
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="
+         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd
+         http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.1.xsd">
+
+    <!-- 支援註解（@Autowired / @Configuration 處理） -->
+    <context:annotation-config />
+    <!-- 掃描 Spring Security 設定（@EnableWebSecurity / WebSecurityConfigurerAdapter） -->
+    <context:component-scan base-package="com.example.accountmgmt.security" />
+    <!-- 支援 @Transactional -->
+    <tx:annotation-driven />
+
+    <!-- 載入非機敏 DB 設定（密碼不在此檔，見下方 dataSource） -->
+    <context:property-placeholder location="classpath:db.properties" />
+
+    <!-- DataSource：密碼走環境變數 DB_PASSWORD（S2，不硬編密鑰），預設空字串由 Phase 2 Docker/.env 注入 -->
+    <bean id="dataSource"
+          class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${db.driver}" />
+        <property name="url" value="${db.url}" />
+        <property name="username" value="${db.username}" />
+        <property name="password" value="${DB_PASSWORD:}" />
+    </bean>
+
+    <!-- Hibernate 4 SessionFactory（遷移雷：改 Spring Data JPA） -->
+    <bean id="sessionFactory"
+          class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="configLocation" value="classpath:hibernate.cfg.xml" />
+        <property name="packagesToScan" value="com.example.accountmgmt.hibernate.model" />
+    </bean>
+
+    <bean id="transactionManager"
+          class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+
+    <!-- service 層 bean（XML 顯式 wiring = legacy 味） -->
+    <bean id="accountService" class="com.example.accountmgmt.service.impl.AccountServiceImpl" />
+    <bean id="transactionService" class="com.example.accountmgmt.service.impl.TransactionServiceImpl" />
+
+    <!-- dao 層 bean -->
+    <bean id="accountDAO" class="com.example.accountmgmt.dao.impl.AccountDAOImpl" />
+    <bean id="transactionDAO" class="com.example.accountmgmt.dao.impl.TransactionDAOImpl" />
+</beans>

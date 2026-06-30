@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN" "http://struts.apache.org/dtds/struts-2.0.dtd">
+<!--
+  Struts2 路由設定（遷移雷：Spring Boot 3 要改成 @RestController / @RequestMapping 註解）。
+  對應 design.md §3.3。
+-->
+<struts>
+    <package name="default" extends="struts-default">
+
+        <!-- 帳戶 CRUD -->
+        <action name="accountList" class="com.example.accountmgmt.action.AccountAction" method="list">
+            <result name="success">/accountList.jsp</result>
+        </action>
+
+        <action name="addAccount" class="com.example.accountmgmt.action.AccountAction" method="add">
+            <result name="input">/addAccount.jsp</result>
+            <result name="success" type="redirect">accountList</result>
+        </action>
+        <action name="saveAccount" class="com.example.accountmgmt.action.AccountAction" method="save">
+            <result name="success" type="redirect">accountList</result>
+        </action>
+
+        <action name="editAccount" class="com.example.accountmgmt.action.AccountAction" method="edit">
+            <result name="input">/editAccount.jsp</result>
+            <result name="error">/accountList.jsp</result>
+            <result name="success" type="redirect">accountList</result>
+        </action>
+        <action name="updateAccount" class="com.example.accountmgmt.action.AccountAction" method="update">
+            <result name="success" type="redirect">accountList</result>
+        </action>
+
+        <action name="deleteAccount" class="com.example.accountmgmt.action.AccountAction" method="delete">
+            <result name="success" type="redirect">accountList</result>
+        </action>
+
+        <!-- 交易：存款 / 提款 / 查紀錄 -->
+        <action name="transactions" class="com.example.accountmgmt.action.TransactionAction" method="list">
+            <result name="success">/transactionList.jsp</result>
+        </action>
+        <action name="deposit" class="com.example.accountmgmt.action.TransactionAction" method="deposit">
+            <result name="input">/transactionList.jsp</result>
+            <result name="success" type="redirect">transactions?accountNo=${accountNo}</result>
+        </action>
+        <action name="withdraw" class="com.example.accountmgmt.action.TransactionAction" method="withdraw">
+            <result name="input">/transactionList.jsp</result>
+            <result name="success" type="redirect">transactions?accountNo=${accountNo}</result>
+        </action>
+    </package>
+</struts>
