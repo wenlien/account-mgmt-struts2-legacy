@@ -20,7 +20,7 @@
 |:---|:---|
 | Web | Struts 2.5（`struts.xml` 路由）+ JSP |
 | 整合 | struts2-spring-plugin |
-| DI | Spring 4.1（`spring-config.xml` XML bean） |
+| DI | Spring 4.3（`spring-config.xml` XML bean） |
 | 安全 | Spring Security 4（`WebSecurityConfigurerAdapter`） |
 | 持久層 | Hibernate 4（`SessionFactory`）+ MySQL |
 | 平台 | Java 8 / Maven / `javax.*` |
@@ -54,11 +54,14 @@
   - `ADMIN_USERNAME` / `ADMIN_PASSWORD`：登入帳密（`SecurityConfig` in-memory 認證）
 - 非機敏 DB 設定在 `src/main/resources/db.properties`（DB 名 `accountdb`）。
 - 建置：`mvn clean package`（產出 war，部署到 Servlet 容器如 Tomcat 9）。
+- 一鍵 build / 啟動：`./run.sh`（build + embedded Tomcat 7 啟動）；只 build 用 `./run.sh build`。
+  - JDK 17 上執行需 `--add-opens java.base/java.lang=ALL-UNNAMED`（Spring 4 CGLIB 相容），`run.sh` 已透過 `MAVEN_OPTS` 自動帶入。
 
 ## 已知待辦（Phase 2 build 驗證）
 
-- 實機 `mvn clean package` 驗證編譯（Struts 2.5 / Spring 4.1 / Spring Security 4.1 版本對齊）。
-- Docker Compose 起 MySQL + seed 資料（可斷言：A001 餘額 = 1000.00 等）。
+- ✅ 實機 `mvn clean package` 通過（8 tests 綠燈）；embedded Tomcat 啟動 + 登入頁 HTTP 200 已驗證。
+- ✅ 版本對齊：Spring Framework 升至 4.3.30.RELEASE（原 4.1.4 缺 `CorsFilter`，與 Spring Security 4.1.5 不相容）。
+- Docker Compose 起 MySQL + seed 資料（可斷言：A001 餘額 = 1000.00 等）— 目前未起 MySQL 時 app 仍能啟動，但帳戶/交易頁查詢會失敗。
 - 凍結 golden master baseline 請求集。
 
 ## 授權

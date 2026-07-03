@@ -1,0 +1,30 @@
+# Phase 2 — 起 MySQL 給 account-mgmt-struts2-legacy 用
+#   docker compose up -d      # 啟動
+#   docker compose down       # 停止（保留資料）
+#   docker compose down -v    # 停止並清掉資料（下次重新 seed）
+#
+# 注意：app 的 driver 是舊的 MySQL Connector/J 5.1.49，需要 mysql_native_password，
+#       故 MySQL 8 以 --default-authentication-plugin=mysql_native_password 啟動。
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: accountdb-mysql
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: accountdb
+      MYSQL_USER: accountuser
+      MYSQL_PASSWORD: ${DB_PASSWORD:-devpass}
+    ports:
+      - "${APP_DB_PORT:-3306}:3306"
+    volumes:
+      - ./docker/init:/docker-entrypoint-initdb.d:ro
+      - accountdb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-rootpass}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  accountdb-data:
