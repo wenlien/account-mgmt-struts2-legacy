@@ -31,6 +31,14 @@
         <input type="submit" value="Withdraw">
     </form>
 
+    <h2>Transfer</h2>
+    <form action="transfer" method="post" class="account-form">
+        <input type="hidden" name="accountNo" value="${accountNo}"/>
+        <s:textfield name="toAccountNo" label="To Account No"/>
+        <s:textfield name="amount" label="%{getText('label.amount')}"/>
+        <input type="submit" value="Transfer">
+    </form>
+
     <h2>History</h2>
     <table class="account-table">
         <tr>

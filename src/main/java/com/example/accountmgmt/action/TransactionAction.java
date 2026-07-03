@@ -15,6 +15,7 @@ import java.util.List;
 public class TransactionAction extends ActionSupport {
 
     private String accountNo;
+    private String toAccountNo;
     private BigDecimal amount;
     private List<Transaction> transactionList;
 
@@ -49,6 +50,19 @@ public class TransactionAction extends ActionSupport {
         return SUCCESS;
     }
 
+    public String transfer() {
+        try {
+            transactionService.transfer(accountNo, toAccountNo, amount);
+        } catch (InsufficientBalanceException ex) {
+            addActionError(ex.getMessage());
+            return INPUT;
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            addActionError(ex.getMessage());
+            return INPUT;
+        }
+        return SUCCESS;
+    }
+
     // Getters and setters
 
     public String getAccountNo() {
@@ -57,6 +71,14 @@ public class TransactionAction extends ActionSupport {
 
     public void setAccountNo(String accountNo) {
         this.accountNo = accountNo;
+    }
+
+    public String getToAccountNo() {
+        return toAccountNo;
+    }
+
+    public void setToAccountNo(String toAccountNo) {
+        this.toAccountNo = toAccountNo;
     }
 
     public BigDecimal getAmount() {

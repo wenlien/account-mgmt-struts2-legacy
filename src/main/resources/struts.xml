@@ -45,5 +45,9 @@
             <result name="input">/transactionList.jsp</result>
             <result name="success" type="redirect">transactions?accountNo=${accountNo}</result>
         </action>
+        <action name="transfer" class="com.example.accountmgmt.action.TransactionAction" method="transfer">
+            <result name="input">/transactionList.jsp</result>
+            <result name="success" type="redirect">transactions?accountNo=${accountNo}</result>
+        </action>
     </package>
 </struts>

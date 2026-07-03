@@ -74,6 +74,52 @@ public class TransactionServiceTest {
         service.deposit("A002", new BigDecimal("100.00"));
     }
 
+    // ---- transfer ----
+
+    @Test
+    public void transfer_movesBalance_andRecordsTwoLegs() {
+        accountDAO.addAccount(new Account("A002", "Bob", new BigDecimal("0.00"), new Date(), AccountStatus.ACTIVE));
+        service.transfer("A001", "A002", new BigDecimal("300.00"));
+        assertEquals(new BigDecimal("700.00"), accountDAO.getAccountByNo("A001").getBalance());
+        assertEquals(new BigDecimal("300.00"), accountDAO.getAccountByNo("A002").getBalance());
+        assertEquals(1, transactionDAO.getTransactionsByAccount("A001").size()); // WITHDRAW leg
+        assertEquals(1, transactionDAO.getTransactionsByAccount("A002").size()); // DEPOSIT leg
+    }
+
+    @Test(expected = InsufficientBalanceException.class)
+    public void transfer_insufficientBalance_throws() {
+        accountDAO.addAccount(new Account("A002", "Bob", new BigDecimal("0.00"), new Date(), AccountStatus.ACTIVE));
+        service.transfer("A001", "A002", new BigDecimal("5000.00"));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void transfer_frozenDestination_throws() {
+        accountDAO.addAccount(new Account("A003", "Carol", new BigDecimal("0.00"), new Date(), AccountStatus.FROZEN));
+        service.transfer("A001", "A003", new BigDecimal("100.00"));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void transfer_frozenSource_throws() {
+        accountDAO.addAccount(new Account("A004", "Dan", new BigDecimal("500.00"), new Date(), AccountStatus.FROZEN));
+        service.transfer("A004", "A001", new BigDecimal("100.00"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void transfer_sameAccount_throws() {
+        service.transfer("A001", "A001", new BigDecimal("100.00"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void transfer_nonexistentDestination_throws() {
+        service.transfer("A001", "NOPE", new BigDecimal("100.00"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void transfer_nonPositiveAmount_throws() {
+        accountDAO.addAccount(new Account("A002", "Bob", new BigDecimal("0.00"), new Date(), AccountStatus.ACTIVE));
+        service.transfer("A001", "A002", new BigDecimal("0.00"));
+    }
+
     // ---- in-memory fakes ----
 
     static class FakeAccountDAO implements AccountDAO {
