@@ -42,3 +42,7 @@ build/
 
 ### App run secrets ###
 .env
+
+### Kiro scratch / local run artifacts ###
+.kiro-tmp/
+newman/

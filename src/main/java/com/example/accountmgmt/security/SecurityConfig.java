@@ -1,11 +1,13 @@
 package com.example.accountmgmt.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * Spring Security 設定（登入認證）。
@@ -22,6 +24,14 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    /** DB 客戶帳號的 UserDetailsService（#6）。 */
+    @Autowired
+    private CustomUserDetailsService userDetailsService;
+
+    /** BCrypt 密碼雜湊器（spring-config.xml 定義）。 */
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private String adminUsername() {
         String u = System.getenv("ADMIN_USERNAME");
         return (u == null || u.isEmpty()) ? "admin" : u;
@@ -35,17 +45,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        // Spring Security 4.x 風格的 in-memory 認證（明文比對）。
+        // (1) admin：in-memory、明文比對、ROLE_ADMIN（帳密走環境變數，不硬編）。
         auth.inMemoryAuthentication()
                 .withUser(adminUsername())
                 .password(adminPassword())
-                .roles("USER");
+                .roles("ADMIN");
+        // (2) 一般客戶：DB-backed UserDetailsService + BCrypt（#6）。
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
     }
 
     @Override
     public void configure(WebSecurity web) throws Exception {
         // 靜態資源放行。
-        web.ignoring().antMatchers("/css/**");
+        web.ignoring().antMatchers("/css/**", "/images/**");
     }
 
     @Override
@@ -53,6 +65,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
             .authorizeRequests()
                 .antMatchers("/login", "/login.jsp").permitAll()
+                // ---- ADMIN 專屬（#7/#8）：開戶、帳戶生命週期、櫃檯存提款、稽核頁 ----
+                // 用 /name* 一併涵蓋 /name 與 /name.action 兩種 Struts2 URL 形式。
+                .antMatchers(
+                        "/openAccount*", "/addAccount*", "/saveAccount*",
+                        "/freezeAccount*", "/activateAccount*",
+                        "/closeAccountForm*", "/closeAccount*", "/batchCloseForm*", "/closeAccounts*",
+                        "/freezeSelected*", "/activateSelected*",
+                        "/editOwnerForm*", "/updateOwner*", "/resetPasswordForm*", "/resetPassword*",
+                        "/auditLog*").hasRole("ADMIN")
+                // ---- 已登入即可（user + admin）：清單(依角色過濾)、交易查詢、存/提/轉(限自己帳戶,Action 層 ownership 檢查)、改密碼 ----
+                .antMatchers(
+                        "/accountList*", "/transactions*",
+                        "/deposit*", "/withdraw*", "/transfer*",
+                        "/changePasswordForm*", "/changePassword*").authenticated()
                 .anyRequest().authenticated()
                 .and()
             .formLogin()

@@ -41,7 +41,7 @@ account-mgmt-struts2-legacy — build / run 腳本
   db-reset 把 DB 還原成 golden 出廠資料（reset to factory；需 accountdb-mysql 容器在跑）
   help     顯示這份說明（-h / --help 亦可）
 
-啟動流程（run / all）：先起 web app → 背景偵測 ready → 開瀏覽器 → 把 server 帶回前景（Ctrl-C 停止）。
+啟動流程（run / all）：載入 .env → 殺佔 port 的殘留 Java process → 確認 MySQL 容器就緒 → 清除 Tomcat 殘留 config → 起 web app → 背景偵測 ready → 開瀏覽器 → 把 server 帶回前景（Ctrl-C 停止）。
 
 環境變數（可寫進 .env）：
   APP_HOST                 開瀏覽器用的主機（預設 localhost）
@@ -250,17 +250,84 @@ fi
 
 # ---- 3. 依指令執行 ----
 TOMCAT_PLUGIN="org.apache.tomcat.maven:tomcat7-maven-plugin:2.2"
+TOMCAT_GOAL="run-war"
+
+# 確保 MySQL container 已啟動且可連線（最多等 30s）；若未運行則嘗試 docker compose up。
+ensure_db_ready() {
+  local container="accountdb-mysql"
+  local max_wait=30 i
+
+  # 1) container 是否存在且在跑？不在跑就嘗試啟動
+  if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$container"; then
+    echo "[run] MySQL 容器 $container 未運行，嘗試啟動..."
+    if [ -f "$APP_DIR/docker-compose.yml" ]; then
+      docker compose -f "$APP_DIR/docker-compose.yml" up -d 2>/dev/null \
+        || docker-compose -f "$APP_DIR/docker-compose.yml" up -d 2>/dev/null \
+        || { echo "[run] ERROR: 無法啟動 MySQL 容器。請手動執行 docker compose up -d" >&2; return 1; }
+    else
+      docker start "$container" 2>/dev/null \
+        || { echo "[run] ERROR: 無法啟動 $container。請手動執行 docker start $container" >&2; return 1; }
+    fi
+  fi
+
+  # 2) 等待 MySQL 可接受連線（mysqladmin ping）
+  echo "[run] 等待 MySQL 就緒..."
+  for i in $(seq 1 "$max_wait"); do
+    if docker exec "$container" mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD:-rootpass}" 2>/dev/null | grep -q "alive"; then
+      echo "[run] MySQL 已就緒（${i}s）"
+      return 0
+    fi
+    sleep 1
+  done
+  echo "[run] WARN: 等候 MySQL 就緒逾時（${max_wait}s），仍繼續啟動 app（Spring 連線可能失敗）" >&2
+  return 0
+}
 
 # 啟動 web app → 背景等它 ready 後開瀏覽器 → 用 wait 把 server 帶回前景（Ctrl-C 可停）。
 run_server() {
-  echo "[run] 提醒：需要可連線的 MySQL；登入帳密來自 ADMIN_USERNAME / ADMIN_PASSWORD。Ctrl-C 可停止。"
+  # Step 1: 確保 DB 先就緒
+  ensure_db_ready || exit 1
+
+  # Step 2: 檢查 port 是否被佔用；若被上次殘留 process 佔住則自動清理
+  local port_pid
+  port_pid="$(lsof -ti :"$APP_PORT" 2>/dev/null | head -1)"
+  if [ -n "$port_pid" ]; then
+    echo "[run] port ${APP_PORT} 被 PID ${port_pid} 佔用，嘗試釋放..."
+    kill "$port_pid" 2>/dev/null
+    sleep 2
+    if lsof -ti :"$APP_PORT" >/dev/null 2>&1; then
+      kill -9 "$(lsof -ti :"$APP_PORT" 2>/dev/null)" 2>/dev/null || true
+      sleep 1
+    fi
+    if lsof -ti :"$APP_PORT" >/dev/null 2>&1; then
+      echo "[run] ERROR: 無法釋放 port ${APP_PORT}。請手動停止佔用程式後再試。" >&2
+      exit 1
+    fi
+    echo "[run] port ${APP_PORT} 已釋放"
+  fi
+
+  # Step 3: 清除 embedded Tomcat 殘留設定（讓 plugin 從頭建 clean config）
+  rm -rf "$APP_DIR/target/tomcat"
+
+  # Step 4: 驗證關鍵環境變數已 export（重開機後 .env 靠上方 set -a 載入）
+  if [ -z "${DB_PASSWORD:-}" ]; then
+    echo "[run] WARN: DB_PASSWORD 未設定，Hibernate 連線可能失敗" >&2
+  fi
+  if [ -z "${ADMIN_PASSWORD:-}" ]; then
+    echo "[run] WARN: ADMIN_PASSWORD 未設定，登入功能不可用" >&2
+  fi
+
   echo "[run] 啟動 app（embedded Tomcat 7）→ ${APP_URL}"
-  # 1) 先在背景起 web app（stdout/stderr 仍輸出到終端）
-  mvn -Dmaven.tomcat.port="$APP_PORT" "${TOMCAT_PLUGIN}:run-war" &
+  echo "[run] 登入：${ADMIN_USERNAME:-admin} / ****。Ctrl-C 可停止。"
+
+  # Step 5: 在背景起 web app（stdout/stderr 仍輸出到終端）
+  mvn -Dmaven.tomcat.port="$APP_PORT" "${TOMCAT_PLUGIN}:${TOMCAT_GOAL}" &
   local srv=$!
-  # 2) 背景等 server ready 後才開 browser（不阻塞 server 輸出）
+
+  # Step 6: 背景等 server ready 後才開 browser（不阻塞 server 輸出）
   wait_and_open "$APP_URL" &
-  # 3) 把 server 帶回前景：wait 阻塞直到 server 結束；Ctrl-C 會連背景一起收掉
+
+  # Step 7: 把 server 帶回前景：wait 阻塞直到 server 結束；Ctrl-C 會連背景一起收掉
   wait "$srv"
 }
 

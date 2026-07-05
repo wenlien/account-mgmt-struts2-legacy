@@ -1,0 +1,1364 @@
+{
+  "info": {
+    "name": "Account Management Struts2 Legacy",
+    "description": "Postman collection for the Struts2 + Spring 4 + Hibernate 4 legacy account management app.\n\nPrerequisites:\n- App running on {{baseUrl}} (default: http://localhost:8080)\n- MySQL up with seed data (A001 balance=1000.00)\n- .env configured with ADMIN_USERNAME/ADMIN_PASSWORD",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/account-mgmt-struts2-legacy",
+      "type": "string"
+    },
+    {
+      "key": "adminUsername",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "admin1234",
+      "type": "string"
+    },
+    {
+      "key": "testAccountNo",
+      "value": "A001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Spring Security form-based login",
+      "item": [
+        {
+          "name": "Login (form-based)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login redirects (302 or 200)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});",
+                  "",
+                  "pm.test('No login error in response', function () {",
+                  "    pm.expect(pm.response.text()).to.not.include('Bad credentials');",
+                  "    pm.expect(pm.response.text()).to.not.include('login_error');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "username", "value": "{{adminUsername}}" },
+                { "key": "password", "value": "{{adminPassword}}" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "description": "Account CRUD operations (Struts2 .action endpoints)",
+      "item": [
+        {
+          "name": "List all accounts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains account data', function () {",
+                  "    pm.expect(pm.response.text()).to.include('A001');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/accountList.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["accountList.action"]
+            }
+          }
+        },
+        {
+          "name": "Add account (show form)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/addAccount.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["addAccount.action"]
+            }
+          }
+        },
+        {
+          "name": "Save new account",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.variables.set('dynamicAcctNo', 'T' + Date.now().toString().slice(-5));"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Redirects to account list (200 or 302)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "account.accountNo", "value": "{{dynamicAcctNo}}" },
+                { "key": "account.ownerName", "value": "Test User" },
+                { "key": "account.balance", "value": "0.00" },
+                { "key": "account.status", "value": "ACTIVATED" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/saveAccount.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["saveAccount.action"]
+            }
+          }
+        },
+        {
+          "name": "Edit owner form (central, admin, load)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 (form loaded)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/editOwnerForm.action?targetUsername=alice",
+              "host": ["{{baseUrl}}"],
+              "path": ["editOwnerForm.action"],
+              "query": [
+                { "key": "targetUsername", "value": "alice" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update owner name (central, admin) — item3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Redirects to account list (302)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});",
+                  "",
+                  "pm.test('No actionError in response', function () {",
+                  "    pm.expect(pm.response.text()).to.not.include('actionError');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "targetUsername", "value": "alice" },
+                { "key": "displayName", "value": "Alice Chen" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/updateOwner.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["updateOwner.action"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Account Lifecycle",
+      "description": "Freeze / Activate / Close account (replaces legacy delete)",
+      "item": [
+        {
+          "name": "Freeze account (ACTIVE -> FROZEN, with freeze note) — item2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Freeze succeeds (302 redirect to list)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});",
+                  "",
+                  "pm.test('No error code in response', function () {",
+                  "    pm.expect(pm.response.text()).to.not.include('[E3004]');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNo", "value": "{{testAccountNo}}" },
+                { "key": "freezeNote", "value": "Compliance hold (newman)" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/freezeAccount.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["freezeAccount.action"]
+            }
+          }
+        },
+        {
+          "name": "Freeze account - missing note (expect error) — item2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns INPUT (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Contains FREEZE_NOTE_REQUIRED [E3004]', function () {",
+                  "    pm.expect(pm.response.text()).to.include('E3004');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNo", "value": "{{testAccountNo}}" },
+                { "key": "freezeNote", "value": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/freezeAccount.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["freezeAccount.action"]
+            }
+          }
+        },
+        {
+          "name": "Activate account (FROZEN -> ACTIVE, with activate note)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Activate succeeds (302 redirect to list)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});",
+                  "",
+                  "pm.test('No error code in response', function () {",
+                  "    pm.expect(pm.response.text()).to.not.include('[E3005]');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNo", "value": "{{testAccountNo}}" },
+                { "key": "activateNote", "value": "Identity verified, unfrozen (newman)" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/activateAccount.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["activateAccount.action"]
+            }
+          }
+        },
+        {
+          "name": "Activate account - missing note (expect error)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns INPUT (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Contains ACTIVATE_NOTE_REQUIRED [E3005]', function () {",
+                  "    pm.expect(pm.response.text()).to.include('E3005');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNo", "value": "{{testAccountNo}}" },
+                { "key": "activateNote", "value": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/activateAccount.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["activateAccount.action"]
+            }
+          }
+        },
+        {
+          "name": "Close account form (show)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Close form loads (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/closeAccountForm.action?accountNo=TEST001",
+              "host": ["{{baseUrl}}"],
+              "path": ["closeAccountForm.action"],
+              "query": [
+                { "key": "accountNo", "value": "TEST001" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Close account (balance=0, with note)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Close succeeds (302 redirect)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});",
+                  "",
+                  "pm.test('No actionError in response', function () {",
+                  "    pm.expect(pm.response.text()).to.not.include('actionError');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNo", "value": "TEST001" },
+                { "key": "closeNote", "value": "Customer requested closure" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/closeAccount.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["closeAccount.action"]
+            }
+          }
+        },
+        {
+          "name": "Close account - non-zero balance (expect error)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns INPUT (200 with error)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Contains error about non-zero balance', function () {",
+                  "    var body = pm.response.text().toLowerCase();",
+                  "    pm.expect(body).to.satisfy(function(b) {",
+                  "        return b.includes('balance') || b.includes('actionerror');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNo", "value": "{{testAccountNo}}" },
+                { "key": "closeNote", "value": "Try to close with balance" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/closeAccount.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["closeAccount.action"]
+            }
+          }
+        },
+        {
+          "name": "Close account - missing note (expect error)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns INPUT (200 with error)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Contains actionError', function () {",
+                  "    var body = pm.response.text().toLowerCase();",
+                  "    pm.expect(body).to.satisfy(function(b) {",
+                  "        return b.includes('errormessage') || b.includes('required') || b.includes('actionerror');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNo", "value": "TEST001" },
+                { "key": "closeNote", "value": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/closeAccount.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["closeAccount.action"]
+            }
+          }
+        },
+        {
+          "name": "Open account (auto-increment, TWD category, creates login user)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// #6: openAccount 同時建立登入帳號，username 必須唯一 → 動態產生避免重跑撞名",
+                  "pm.variables.set('dynUser', 'pmuser' + Date.now().toString().slice(-7));",
+                  "// #5: 每電話每類型限一戶（非 CLOSED）→ 動態電話避免重跑撞『同電話同類型』",
+                  "pm.variables.set('dynPhone', '09' + Date.now().toString().slice(-8));"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Open account succeeds (302 redirect)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});",
+                  "",
+                  "pm.test('No actionError in response', function () {",
+                  "    pm.expect(pm.response.text()).to.not.include('actionError');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "ownerName", "value": "Postman Auto Test" },
+                { "key": "username", "value": "{{dynUser}}" },
+                { "key": "password", "value": "pmpass1234" },
+                { "key": "confirmPassword", "value": "pmpass1234" },
+                { "key": "phone", "value": "{{dynPhone}}" },
+                { "key": "address", "value": "123 Postman St" },
+                { "key": "categories", "value": "TWD" },
+                { "key": "twdDeposit", "value": "0" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/openAccount.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["openAccount.action"]
+            }
+          }
+        },
+        {
+          "name": "Open account - missing ownerName (expect error)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns INPUT (200 with error)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Contains actionError about ownerName', function () {",
+                  "    pm.expect(pm.response.text().toLowerCase()).to.satisfy(function(b) {",
+                  "        return b.includes('owner') || b.includes('actionerror');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "ownerName", "value": "" },
+                { "key": "categories", "value": "TWD" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/openAccount.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["openAccount.action"]
+            }
+          }
+        },
+        {
+          "name": "Batch close form (show)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Batch close form loads (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/batchCloseForm.action?selectedAccounts=TEST001",
+              "host": ["{{baseUrl}}"],
+              "path": ["batchCloseForm.action"],
+              "query": [
+                { "key": "selectedAccounts", "value": "TEST001" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "description": "Deposit / Withdraw / Transfer / List transactions。item1：交易須由帳戶擁有者本人執行（先登入 alice，A001/B001 為其名下）；admin 不可代做交易。",
+      "item": [
+        {
+          "name": "Login as account owner (alice) — item1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Owner login OK (200 or 302)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});",
+                  "pm.test('No bad credentials', function () {",
+                  "    pm.expect(pm.response.text()).to.not.include('Bad credentials');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "username", "value": "alice" },
+                { "key": "password", "value": "user1234" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            }
+          }
+        },
+        {
+          "name": "List transactions for account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/transactions.action?accountNo={{testAccountNo}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions.action"],
+              "query": [
+                { "key": "accountNo", "value": "{{testAccountNo}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deposit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Deposit succeeds (302 redirect)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});",
+                  "",
+                  "pm.test('No error message', function () {",
+                  "    pm.expect(pm.response.text()).to.not.include('actionError');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNo", "value": "{{testAccountNo}}" },
+                { "key": "depositAmount", "value": "100.00" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/deposit.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["deposit.action"]
+            }
+          }
+        },
+        {
+          "name": "Withdraw",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Withdraw succeeds (302 redirect)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});",
+                  "",
+                  "pm.test('No error message', function () {",
+                  "    pm.expect(pm.response.text()).to.not.include('actionError');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNo", "value": "{{testAccountNo}}" },
+                { "key": "withdrawAmount", "value": "50.00" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/withdraw.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["withdraw.action"]
+            }
+          }
+        },
+        {
+          "name": "Transfer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Transfer succeeds (302 redirect)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});",
+                  "",
+                  "pm.test('No error message', function () {",
+                  "    pm.expect(pm.response.text()).to.not.include('actionError');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNo", "value": "{{testAccountNo}}" },
+                { "key": "toAccountNo", "value": "A002" },
+                { "key": "transferAmount", "value": "200.00" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transfer.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["transfer.action"]
+            }
+          }
+        },
+        {
+          "name": "Withdraw - insufficient balance (expect error)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns INPUT (200 with error)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Contains error message', function () {",
+                  "    var body = pm.response.text().toLowerCase();",
+                  "    pm.expect(body).to.satisfy(function(b) {",
+                  "        return b.includes('insufficient') || b.includes('errormessage') || b.includes('greater than zero');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNo", "value": "{{testAccountNo}}" },
+                { "key": "withdrawAmount", "value": "9999999.00" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/withdraw.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["withdraw.action"]
+            }
+          }
+        },
+        {
+          "name": "Transfer - insufficient balance (expect error)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns INPUT (200 with error)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Contains error message', function () {",
+                  "    var body = pm.response.text().toLowerCase();",
+                  "    pm.expect(body).to.satisfy(function(b) {",
+                  "        return b.includes('insufficient') || b.includes('errormessage') || b.includes('greater than zero');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNo", "value": "{{testAccountNo}}" },
+                { "key": "toAccountNo", "value": "A002" },
+                { "key": "transferAmount", "value": "9999999.00" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transfer.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["transfer.action"]
+            }
+          }
+        },
+        {
+          "name": "Re-login as admin (restore session for admin-only tests)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Admin login OK (200 or 302)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "username", "value": "{{adminUsername}}" },
+                { "key": "password", "value": "{{adminPassword}}" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            }
+          }
+        },
+        {
+          "name": "Deposit blocked for admin (expect [E6003]) — item1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns INPUT (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Admin blocked with ADMIN_CANNOT_TRANSACT [E6003]', function () {",
+                  "    pm.expect(pm.response.text()).to.include('E6003');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNo", "value": "{{testAccountNo}}" },
+                { "key": "depositAmount", "value": "100.00" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/deposit.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["deposit.action"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit (admin)",
+      "description": "稽核紀錄查詢（#9，admin 專屬；一般 user 會被 403）",
+      "item": [
+        {
+          "name": "Audit log - all",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Renders audit log page', function () {",
+                  "    pm.expect(pm.response.text()).to.include('Audit Log');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/auditLog.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["auditLog.action"]
+            }
+          }
+        },
+        {
+          "name": "Audit log - filter failures (shows error codes)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Failed rows carry an error code', function () {",
+                  "    pm.expect(pm.response.text()).to.match(/E\\d{4}/);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/auditLog.action?success=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["auditLog.action"],
+              "query": [
+                { "key": "success", "value": "false" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Audit log - filter by errorCode E2001 (item6)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Rows carry E2001', function () {",
+                  "    pm.expect(pm.response.text()).to.include('E2001');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/auditLog.action?errorCode=E2001",
+              "host": ["{{baseUrl}}"],
+              "path": ["auditLog.action"],
+              "query": [ { "key": "errorCode", "value": "E2001" } ]
+            }
+          }
+        },
+        {
+          "name": "Audit log - detail regex search (item6)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Regex matched a transfer note', function () {",
+                  "    pm.expect(pm.response.text()).to.match(/note=(fx|salary|rent)/);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/auditLog.action?detailQuery=salary%7Cfx&detailMode=regex",
+              "host": ["{{baseUrl}}"],
+              "path": ["auditLog.action"],
+              "query": [
+                { "key": "detailQuery", "value": "salary|fx" },
+                { "key": "detailMode", "value": "regex" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Audit log - detail shows who + changed fields (item)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Profile-change detail names the user + field', function () {",
+                  "    var b = pm.response.text();",
+                  "    pm.expect(b).to.include('changed:');",
+                  "    pm.expect(b).to.match(/user=\\w+ changed:/);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/auditLog.action?action=UPDATE_OWNER",
+              "host": ["{{baseUrl}}"],
+              "path": ["auditLog.action"],
+              "query": [
+                { "key": "action", "value": "UPDATE_OWNER" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Audit log - sort by actor asc (item)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Renders audit log page (sorted)', function () {",
+                  "    pm.expect(pm.response.text()).to.include('Audit Log');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/auditLog.action?sortBy=actor&sortDir=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["auditLog.action"],
+              "query": [
+                { "key": "sortBy", "value": "actor" },
+                { "key": "sortDir", "value": "asc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Audit log - sort by time desc (item)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Renders audit log page (sorted)', function () {",
+                  "    pm.expect(pm.response.text()).to.include('Audit Log');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/auditLog.action?sortBy=createdAt&sortDir=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["auditLog.action"],
+              "query": [
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "sortDir", "value": "desc" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Management",
+      "description": "item4/item7：admin 重設使用者密碼、批次 freeze/activate（一般 user 會被 403）",
+      "item": [
+        {
+          "name": "Batch freeze selected (item7)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Batch freeze OK (200 list)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/x-www-form-urlencoded" } ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNos", "value": "A005" },
+                { "key": "freezeNote", "value": "Batch compliance hold (newman)" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/freezeSelected.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["freezeSelected.action"]
+            }
+          }
+        },
+        {
+          "name": "Batch activate selected (item7)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Batch activate OK (200 list)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/x-www-form-urlencoded" } ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "accountNos", "value": "A005" },
+                { "key": "activateNote", "value": "Batch reactivation (newman)" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/activateSelected.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["activateSelected.action"]
+            }
+          }
+        },
+        {
+          "name": "Admin reset user password (item4)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Reset OK (302 redirect)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});",
+                  "pm.test('No actionError', function () {",
+                  "    pm.expect(pm.response.text()).to.not.include('actionError');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/x-www-form-urlencoded" } ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "targetUsername", "value": "eve" },
+                { "key": "newPassword", "value": "evepass1234" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/resetPassword.action",
+              "host": ["{{baseUrl}}"],
+              "path": ["resetPassword.action"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

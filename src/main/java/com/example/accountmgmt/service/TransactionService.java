@@ -17,8 +17,9 @@ public interface TransactionService {
      * 轉帳：從 fromAccountNo 轉 amount 到 toAccountNo。
      * 來源與目標帳戶皆須存在且狀態為 ACTIVE，來源餘額須足夠，且不可轉給自己。
      * 內部以「來源 WITHDRAW + 目標 DEPOSIT」兩筆交易記錄，整筆原子性（@Transactional）。
+     * note 為選填的轉帳註記（最多 7 字元），會同時寫入雙方兩筆交易記錄的 note 欄位。
      */
-    void transfer(String fromAccountNo, String toAccountNo, BigDecimal amount);
+    void transfer(String fromAccountNo, String toAccountNo, BigDecimal amount, String note);
 
     List<Transaction> getTransactions(String accountNo);
 }

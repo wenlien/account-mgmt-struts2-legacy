@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 72" role="img" aria-label="Anycompany Business Capital">
+  <!-- White logo for dark header background (#232f3e). Growth-bars emblem + ABC wordmark. -->
+  <g fill="#FFFFFF">
+    <!-- growth bars (ascending) -->
+    <rect x="6"  y="40" width="12" height="26" rx="3"/>
+    <rect x="24" y="28" width="12" height="38" rx="3"/>
+    <rect x="42" y="14" width="12" height="52" rx="3"/>
+    <!-- upward arrow accent over the tallest bar -->
+    <path d="M40 12 L54 12 L54 26 L49.5 21.5 L36 35 L31 30 L44.5 16.5 Z" opacity="0.85"/>
+  </g>
+  <!-- ABC wordmark -->
+  <text x="72" y="50"
+        font-family="'Amazon Ember','Helvetica Neue',Arial,sans-serif"
+        font-size="46" font-weight="700" letter-spacing="1" fill="#FFFFFF">ABC</text>
+  <!-- accent dot -->
+  <circle cx="188" cy="44" r="5" fill="#FF9900"/>
+</svg>

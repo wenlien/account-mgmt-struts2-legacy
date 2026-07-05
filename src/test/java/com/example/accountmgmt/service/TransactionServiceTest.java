@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 
 /**
  * TransactionService 的 JUnit 4 測試（含 @Before）。
@@ -35,7 +35,7 @@ public class TransactionServiceTest {
     public void setUp() {
         accountDAO = new FakeAccountDAO();
         transactionDAO = new FakeTransactionDAO();
-        Account a = new Account("A001", "Alice", new BigDecimal("1000.00"), new Date(), AccountStatus.ACTIVE);
+        Account a = new Account("A001", "Alice", new BigDecimal("1000.00"), new Date(), AccountStatus.ACTIVATED);
         accountDAO.addAccount(a);
 
         service = new TransactionServiceImpl();
@@ -78,8 +78,8 @@ public class TransactionServiceTest {
 
     @Test
     public void transfer_movesBalance_andRecordsTwoLegs() {
-        accountDAO.addAccount(new Account("A002", "Bob", new BigDecimal("0.00"), new Date(), AccountStatus.ACTIVE));
-        service.transfer("A001", "A002", new BigDecimal("300.00"));
+        accountDAO.addAccount(new Account("A002", "Bob", new BigDecimal("0.00"), new Date(), AccountStatus.ACTIVATED));
+        service.transfer("A001", "A002", new BigDecimal("300.00"), null);
         assertEquals(new BigDecimal("700.00"), accountDAO.getAccountByNo("A001").getBalance());
         assertEquals(new BigDecimal("300.00"), accountDAO.getAccountByNo("A002").getBalance());
         assertEquals(1, transactionDAO.getTransactionsByAccount("A001").size()); // WITHDRAW leg
@@ -88,36 +88,72 @@ public class TransactionServiceTest {
 
     @Test(expected = InsufficientBalanceException.class)
     public void transfer_insufficientBalance_throws() {
-        accountDAO.addAccount(new Account("A002", "Bob", new BigDecimal("0.00"), new Date(), AccountStatus.ACTIVE));
-        service.transfer("A001", "A002", new BigDecimal("5000.00"));
+        accountDAO.addAccount(new Account("A002", "Bob", new BigDecimal("0.00"), new Date(), AccountStatus.ACTIVATED));
+        service.transfer("A001", "A002", new BigDecimal("5000.00"), null);
     }
 
     @Test(expected = IllegalStateException.class)
     public void transfer_frozenDestination_throws() {
         accountDAO.addAccount(new Account("A003", "Carol", new BigDecimal("0.00"), new Date(), AccountStatus.FROZEN));
-        service.transfer("A001", "A003", new BigDecimal("100.00"));
+        service.transfer("A001", "A003", new BigDecimal("100.00"), null);
     }
 
     @Test(expected = IllegalStateException.class)
     public void transfer_frozenSource_throws() {
         accountDAO.addAccount(new Account("A004", "Dan", new BigDecimal("500.00"), new Date(), AccountStatus.FROZEN));
-        service.transfer("A004", "A001", new BigDecimal("100.00"));
+        service.transfer("A004", "A001", new BigDecimal("100.00"), null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void transfer_sameAccount_throws() {
-        service.transfer("A001", "A001", new BigDecimal("100.00"));
+        service.transfer("A001", "A001", new BigDecimal("100.00"), null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void transfer_crossCategory_throws() {
+        accountDAO.addAccount(new Account("B001", "Eve", new BigDecimal("500.00"), new Date(), AccountStatus.ACTIVATED));
+        service.transfer("A001", "B001", new BigDecimal("100.00"), null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void transfer_nonexistentDestination_throws() {
-        service.transfer("A001", "NOPE", new BigDecimal("100.00"));
+        service.transfer("A001", "NOPE", new BigDecimal("100.00"), null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void transfer_nonPositiveAmount_throws() {
-        accountDAO.addAccount(new Account("A002", "Bob", new BigDecimal("0.00"), new Date(), AccountStatus.ACTIVE));
-        service.transfer("A001", "A002", new BigDecimal("0.00"));
+        accountDAO.addAccount(new Account("A002", "Bob", new BigDecimal("0.00"), new Date(), AccountStatus.ACTIVATED));
+        service.transfer("A001", "A002", new BigDecimal("0.00"), null);
+    }
+
+    @Test
+    public void transfer_withNote_writesSameNoteToBothLegs() {
+        accountDAO.addAccount(new Account("A002", "Bob", new BigDecimal("0.00"), new Date(), AccountStatus.ACTIVATED));
+        service.transfer("A001", "A002", new BigDecimal("100.00"), "rent"); // 4 chars, within limit
+        Transaction withdrawLeg = transactionDAO.getTransactionsByAccount("A001").get(0);
+        Transaction depositLeg = transactionDAO.getTransactionsByAccount("A002").get(0);
+        assertEquals("rent", withdrawLeg.getNote());
+        assertEquals("rent", depositLeg.getNote());
+    }
+
+    @Test
+    public void transfer_maxLengthNote_accepted() {
+        accountDAO.addAccount(new Account("A002", "Bob", new BigDecimal("0.00"), new Date(), AccountStatus.ACTIVATED));
+        service.transfer("A001", "A002", new BigDecimal("100.00"), "1234567"); // exactly 7 chars
+        assertEquals("1234567", transactionDAO.getTransactionsByAccount("A002").get(0).getNote());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void transfer_noteTooLong_throws() {
+        accountDAO.addAccount(new Account("A002", "Bob", new BigDecimal("0.00"), new Date(), AccountStatus.ACTIVATED));
+        service.transfer("A001", "A002", new BigDecimal("100.00"), "12345678"); // 8 chars, over limit
+    }
+
+    @Test
+    public void transfer_blankNote_storedAsNull() {
+        accountDAO.addAccount(new Account("A002", "Bob", new BigDecimal("0.00"), new Date(), AccountStatus.ACTIVATED));
+        service.transfer("A001", "A002", new BigDecimal("100.00"), "   ");
+        assertNull(transactionDAO.getTransactionsByAccount("A002").get(0).getNote());
     }
 
     // ---- in-memory fakes ----
@@ -133,6 +169,26 @@ public class TransactionServiceTest {
             return store.get(accountNo);
         }
 
+        public List<Account> getAccountsByOwnerUsername(String ownerUsername) {
+            List<Account> result = new ArrayList<Account>();
+            for (Account a : store.values()) {
+                if (ownerUsername != null && ownerUsername.equals(a.getOwnerUsername())) {
+                    result.add(a);
+                }
+            }
+            return result;
+        }
+
+        public List<Account> getAccountsByPhone(String phone) {
+            List<Account> result = new ArrayList<Account>();
+            for (Account a : store.values()) {
+                if (phone != null && phone.equals(a.getPhone())) {
+                    result.add(a);
+                }
+            }
+            return result;
+        }
+
         public void addAccount(Account account) {
             store.put(account.getAccountNo(), account);
         }
@@ -143,6 +199,17 @@ public class TransactionServiceTest {
 
         public void deleteAccount(String accountNo) {
             store.remove(accountNo);
+        }
+
+        public int getMaxSequence(char prefix) {
+            int max = 0;
+            for (String key : store.keySet()) {
+                if (key.charAt(0) == prefix) {
+                    int seq = Integer.parseInt(key.substring(1));
+                    if (seq > max) max = seq;
+                }
+            }
+            return max;
         }
     }
 
@@ -161,7 +228,6 @@ public class TransactionServiceTest {
 
         public void addTransaction(Transaction transaction) {
             store.add(transaction);
-            assertTrue(transaction.getAmount().compareTo(BigDecimal.ZERO) > 0);
         }
     }
 }

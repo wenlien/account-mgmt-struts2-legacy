@@ -35,6 +35,26 @@ public class AccountDAOImpl implements AccountDAO {
 
     @Override
     @Transactional
+    @SuppressWarnings("unchecked")
+    public List<Account> getAccountsByOwnerUsername(String ownerUsername) {
+        return (List<Account>) sessionFactory.getCurrentSession()
+                .createQuery("from Account a where a.ownerUsername = :owner order by a.accountNo")
+                .setParameter("owner", ownerUsername)
+                .list();
+    }
+
+    @Override
+    @Transactional
+    @SuppressWarnings("unchecked")
+    public List<Account> getAccountsByPhone(String phone) {
+        return (List<Account>) sessionFactory.getCurrentSession()
+                .createQuery("from Account a where a.phone = :phone order by a.accountNo")
+                .setParameter("phone", phone)
+                .list();
+    }
+
+    @Override
+    @Transactional
     public void addAccount(Account account) {
         sessionFactory.getCurrentSession().save(account);
     }
@@ -47,11 +67,12 @@ public class AccountDAOImpl implements AccountDAO {
 
     @Override
     @Transactional
-    public void deleteAccount(String accountNo) {
-        Account account = (Account) sessionFactory.getCurrentSession()
-                .get(Account.class, accountNo);
-        if (account != null) {
-            sessionFactory.getCurrentSession().delete(account);
-        }
+    public int getMaxSequence(char prefix) {
+        String hql = "SELECT MAX(CAST(SUBSTRING(a.accountNo, 2) AS integer)) FROM Account a WHERE a.accountNo LIKE :pattern";
+        Object result = sessionFactory.getCurrentSession()
+                .createQuery(hql)
+                .setParameter("pattern", prefix + "%")
+                .uniqueResult();
+        return result == null ? 0 : ((Number) result).intValue();
     }
 }

@@ -26,3 +26,107 @@ tr:hover {
 form {
     display: inline;
 }
+
+/* ---- App Header (sticky) ---- */
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #232f3e;
+    color: #fff;
+    padding: 12px 24px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.header-logo {
+    height: 36px;
+}
+
+.header-title {
+    font-size: 18px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.header-title--login {
+    font-size: 96px;   /* #3: 放大 4 倍（24px -> 96px） */
+    line-height: 1.1;
+}
+
+/* #4: login 頁把標題排到 logo 下方、靠左（logo 一行、標題一行，垂直堆疊左對齊） */
+.app-header--login {
+    justify-content: flex-start;
+}
+
+.app-header--login .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.header-user {
+    font-size: 14px;
+    color: #ccc;
+    white-space: nowrap;
+}
+
+.header-user strong {
+    color: #ff9900;
+}
+
+.header-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 4px 8px;
+}
+
+.header-link:hover {
+    text-decoration: underline;
+}
+
+.app-header .header-logout-form {
+    margin: 0;
+    display: inline-block;
+}
+
+.header-logout-btn {
+    background-color: #ff9900;
+    color: #232f3e;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.header-logout-btn:hover {
+    background-color: #ec7211;
+}
+
+/* ---- Main content area ---- */
+.main-content {
+    padding: 20px;
+}

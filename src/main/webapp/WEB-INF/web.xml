@@ -3,10 +3,11 @@
   Servlet 2.4 描述子（javax.* / j2ee 命名空間 = 遷移雷）。
   Filter 順序：Spring Security 先於 Struts2。
 -->
-<web-app id="WebApp_ID" version="2.4"
-         xmlns="http://java.sun.com/xml/ns/j2ee"
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         version="3.0"
+         metadata-complete="true">
     <display-name>Account Management (Struts2 + Spring4 + Hibernate)</display-name>
 
     <!-- 載入 Spring root context -->
@@ -39,6 +40,6 @@
     </filter-mapping>
 
     <welcome-file-list>
-        <welcome-file>accountList</welcome-file>
+        <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
 </web-app>

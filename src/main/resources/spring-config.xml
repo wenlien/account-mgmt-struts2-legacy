@@ -44,11 +44,19 @@
         <property name="sessionFactory" ref="sessionFactory" />
     </bean>
 
+    <!-- 密碼雜湊器（#6：BCrypt，不存明文） -->
+    <bean id="passwordEncoder"
+          class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+
     <!-- service 層 bean（XML 顯式 wiring = legacy 味） -->
     <bean id="accountService" class="com.example.accountmgmt.service.impl.AccountServiceImpl" />
     <bean id="transactionService" class="com.example.accountmgmt.service.impl.TransactionServiceImpl" />
+    <bean id="userService" class="com.example.accountmgmt.service.impl.UserServiceImpl" />
+    <bean id="auditService" class="com.example.accountmgmt.service.impl.AuditServiceImpl" />
 
     <!-- dao 層 bean -->
     <bean id="accountDAO" class="com.example.accountmgmt.dao.impl.AccountDAOImpl" />
     <bean id="transactionDAO" class="com.example.accountmgmt.dao.impl.TransactionDAOImpl" />
+    <bean id="userDAO" class="com.example.accountmgmt.dao.impl.UserDAOImpl" />
+    <bean id="auditLogDAO" class="com.example.accountmgmt.dao.impl.AuditLogDAOImpl" />
 </beans>

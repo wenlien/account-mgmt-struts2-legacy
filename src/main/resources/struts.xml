@@ -19,18 +19,83 @@
         <action name="saveAccount" class="com.example.accountmgmt.action.AccountAction" method="save">
             <result name="success" type="redirect">accountList</result>
         </action>
-
-        <action name="editAccount" class="com.example.accountmgmt.action.AccountAction" method="edit">
-            <result name="input">/editAccount.jsp</result>
-            <result name="error">/accountList.jsp</result>
-            <result name="success" type="redirect">accountList</result>
-        </action>
-        <action name="updateAccount" class="com.example.accountmgmt.action.AccountAction" method="update">
+        <action name="openAccount" class="com.example.accountmgmt.action.AccountAction" method="openAccount">
+            <result name="input">/addAccount.jsp</result>
             <result name="success" type="redirect">accountList</result>
         </action>
 
-        <action name="deleteAccount" class="com.example.accountmgmt.action.AccountAction" method="delete">
+        <!-- item3：admin 中央變更 owner 名稱（改 User.displayName，一改全帳戶同步） -->
+        <action name="editOwnerForm" class="com.example.accountmgmt.action.UserAction" method="editOwnerForm">
+            <result name="input">/editOwner.jsp</result>
+            <result name="error" type="redirect">accountList</result>
+        </action>
+        <action name="updateOwner" class="com.example.accountmgmt.action.UserAction" method="updateOwner">
+            <result name="input">/editOwner.jsp</result>
             <result name="success" type="redirect">accountList</result>
+        </action>
+        <!-- item4：admin 重設使用者密碼 -->
+        <action name="resetPasswordForm" class="com.example.accountmgmt.action.UserAction" method="resetPasswordForm">
+            <result name="input">/adminResetPassword.jsp</result>
+            <result name="error" type="redirect">accountList</result>
+        </action>
+        <action name="resetPassword" class="com.example.accountmgmt.action.UserAction" method="resetPassword">
+            <result name="input">/adminResetPassword.jsp</result>
+            <result name="success" type="redirect">accountList</result>
+        </action>
+
+        <!-- 帳戶生命週期：凍結 / 解凍 / 關戶（取代原 delete） -->
+        <!-- item2：凍結需填 freeze note，先進表單頁 -->
+        <action name="freezeAccountForm" class="com.example.accountmgmt.action.AccountAction" method="freezeForm">
+            <result name="input">/freezeAccount.jsp</result>
+            <result name="list">/accountList.jsp</result>
+        </action>
+        <action name="freezeAccount" class="com.example.accountmgmt.action.AccountAction" method="freeze">
+            <result name="success" type="redirect">accountList</result>
+            <result name="input">/freezeAccount.jsp</result>
+            <result name="list">/accountList.jsp</result>
+        </action>
+        <!-- 本輪：解凍需填 activate note，先進表單頁 -->
+        <action name="activateAccountForm" class="com.example.accountmgmt.action.AccountAction" method="activateForm">
+            <result name="input">/activateAccount.jsp</result>
+            <result name="list">/accountList.jsp</result>
+        </action>
+        <action name="activateAccount" class="com.example.accountmgmt.action.AccountAction" method="activate">
+            <result name="success" type="redirect">accountList</result>
+            <result name="input">/activateAccount.jsp</result>
+            <result name="list">/accountList.jsp</result>
+        </action>
+        <action name="closeAccountForm" class="com.example.accountmgmt.action.AccountAction" method="closeForm">
+            <result name="input">/closeAccount.jsp</result>
+            <result name="list">/accountList.jsp</result>
+        </action>
+        <action name="closeAccount" class="com.example.accountmgmt.action.AccountAction" method="close">
+            <result name="input">/closeAccount.jsp</result>
+            <result name="success" type="redirect">accountList</result>
+        </action>
+        <action name="batchCloseForm" class="com.example.accountmgmt.action.AccountAction" method="batchCloseForm">
+            <result name="input">/closeAccount.jsp</result>
+            <result name="list">/accountList.jsp</result>
+        </action>
+        <action name="closeAccounts" class="com.example.accountmgmt.action.AccountAction" method="closeAccounts">
+            <result name="input">/closeAccount.jsp</result>
+            <result name="list">/accountList.jsp</result>
+        </action>
+        <!-- item2/item7：批次凍結需先填一次 freeze note；批次解凍直接執行 -->
+        <action name="batchFreezeForm" class="com.example.accountmgmt.action.AccountAction" method="batchFreezeForm">
+            <result name="input">/freezeAccount.jsp</result>
+            <result name="list">/accountList.jsp</result>
+        </action>
+        <action name="freezeSelected" class="com.example.accountmgmt.action.AccountAction" method="batchFreeze">
+            <result name="input">/freezeAccount.jsp</result>
+            <result name="list">/accountList.jsp</result>
+        </action>
+        <action name="batchActivateForm" class="com.example.accountmgmt.action.AccountAction" method="batchActivateForm">
+            <result name="input">/activateAccount.jsp</result>
+            <result name="list">/accountList.jsp</result>
+        </action>
+        <action name="activateSelected" class="com.example.accountmgmt.action.AccountAction" method="batchActivate">
+            <result name="input">/activateAccount.jsp</result>
+            <result name="list">/accountList.jsp</result>
         </action>
 
         <!-- 交易：存款 / 提款 / 查紀錄 -->
@@ -48,6 +113,20 @@
         <action name="transfer" class="com.example.accountmgmt.action.TransactionAction" method="transfer">
             <result name="input">/transactionList.jsp</result>
             <result name="success" type="redirect">transactions?accountNo=${accountNo}</result>
+        </action>
+
+        <!-- 使用者自助：變更密碼（#8） -->
+        <action name="changePasswordForm" class="com.example.accountmgmt.action.UserAction" method="changePasswordForm">
+            <result name="input">/changePassword.jsp</result>
+        </action>
+        <action name="changePassword" class="com.example.accountmgmt.action.UserAction" method="changePassword">
+            <result name="input">/changePassword.jsp</result>
+            <result name="success">/changePassword.jsp</result>
+        </action>
+
+        <!-- 稽核紀錄查詢（#9，admin 專屬） -->
+        <action name="auditLog" class="com.example.accountmgmt.action.AuditAction" method="list">
+            <result name="success">/auditLog.jsp</result>
         </action>
     </package>
 </struts>
