@@ -204,7 +204,7 @@ stateDiagram-v2
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ [ABC Logo]  Anycompany Business Capital (ABC)  admin [Logout] │  ← sticky header (header.jsp)
+│ [ABC Logo]  AnyCompany Business Capital (ABC)  admin [Logout] │  ← sticky header (header.jsp)
 ├──────────────────────────────────────────────────────────────┤
 │                                                     │
 │  (main-content: accountList / transactions / etc.)  │  ← scrollable content
@@ -212,7 +212,7 @@ stateDiagram-v2
 └─────────────────────────────────────────────────────┘
 ```
 
-- 品牌：**Anycompany Business Capital (ABC)** + `abc-logo.svg`（舊 AWS logo 保留於 images/ 未刪）
+- 品牌：**AnyCompany Business Capital (ABC)** + `abc-logo.svg`（舊 AWS logo 保留於 images/ 未刪）
 - Actions 欄：admin 帳戶清單的每列操作改為 `<select onchange>` 下拉選單（Edit Owner / Freeze / Activate / Close）
 - `header.jsp`：共用 include，顯示 logo / app name / 登入帳戶 / logout
 - 各頁面用 `<jsp:include page="header.jsp"/>` 引入

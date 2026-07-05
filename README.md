@@ -17,7 +17,7 @@
 - **稽核**：所有交易 / 狀態變更 / profile 變更（owner name/密碼/電話/地址，含失敗）寫入獨立 audit_log，detail 記錄「變更對象 + 實際變更欄位」；admin 稽核頁支援多條件過濾（操作者/動作/帳號/成功與否/錯誤碼/日期/detail 純文字或 regex）與排序（下拉或點欄位標題，ASC/DESC 切換）
 - **就地變更歷史**：Edit Owner 頁面下方就地呈現該使用者的 profile 變更紀錄；帳戶清單可點「帳號」進交易畫面、點「owner name」進編輯畫面
 - **開戶資料**：開戶時電話 + 地址必填；密碼需二次確認；同電話同類別（台幣/外幣）非 CLOSED 限一戶（一人可 1 台幣 + 1 外幣）
-- **UI**：branded sticky header（`abc-logo.svg` + "Anycompany Business Capital (ABC)" + 登入帳戶/角色 + 功能連結 + Logout）；admin 帳戶清單的操作改為下拉選單（Edit Owner / Freeze / Activate / Close）
+- **UI**：branded sticky header（`abc-logo.svg` + "AnyCompany Business Capital (ABC)" + 登入帳戶/角色 + 功能連結 + Logout）；admin 帳戶清單的操作改為下拉選單（Edit Owner / Freeze / Activate / Close）
 
 ## 技術棧
 

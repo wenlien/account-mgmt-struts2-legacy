@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Login - Anycompany Business Capital (ABC)</title>
+    <title>Login - AnyCompany Business Capital (ABC)</title>
     <link rel="stylesheet" type="text/css" href="css/style.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
         <div class="header-left">
             <img src="${pageContext.request.contextPath}/images/abc-logo.svg"
                  alt="ABC" class="header-logo" style="width:7.5%; height:auto;"/>
-            <span class="header-title header-title--login">Anycompany Business Capital (ABC)</span>
+            <span class="header-title header-title--login">AnyCompany Business Capital (ABC)</span>
         </div>
     </div>
     <div class="main-content" style="max-width:400px; margin:60px auto;">

@@ -6,7 +6,7 @@
     <div class="header-left">
         <img src="${pageContext.request.contextPath}/images/abc-logo.svg"
              alt="ABC" class="header-logo" style="width:7.5%; height:auto;"/>
-        <span class="header-title">Anycompany Business Capital (ABC)</span>
+        <span class="header-title">AnyCompany Business Capital (ABC)</span>
     </div>
     <div class="header-right">
         <c:if test="${pageContext.request.remoteUser != null}">

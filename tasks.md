@@ -27,7 +27,7 @@
 - [x] 批次 freeze / activate（與批次 close 並列）
 - [x] audit 過濾強化：errorCode + detail 純文字/regex（regex 語法錯誤回 E7001）
 - [x] golden id 與時間同序（單一 INSERT 依 created_at 升序）+ 更多元資料（6 user / 9 帳戶含 CLOSED）
-- [x] 品牌改名 Anycompany Business Capital (ABC) + `abc-logo.svg`（舊 AWS logo 保留）
+- [x] 品牌改名 AnyCompany Business Capital (ABC) + `abc-logo.svg`（舊 AWS logo 保留）
 - [x] 密碼二次確認（開戶 / 自助改密 / admin 重設，`[E5006]`）
 - [x] 開戶電話 + 地址必填（`[E4003]`/`[E4004]`）
 - [x] 電話唯一性：同電話同類別非 CLOSED 限一戶（`[E4005]`），一人可 1 台幣 + 1 外幣

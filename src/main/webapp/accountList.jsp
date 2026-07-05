@@ -7,7 +7,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Anycompany Business Capital (ABC)</title>
+    <title>AnyCompany Business Capital (ABC)</title>
     <link rel="stylesheet" type="text/css" href="css/style.css">
 </head>
 <body>
